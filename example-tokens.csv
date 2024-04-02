@@ -1,3 +1,3 @@
-Canary Domain,FlockID,FactoryAuthToken,AWS Profile Name,AWSAccountID,S3 Bucket Name,Token Type,Filename,File Path,In Scope,Extra Note
+Canary Domain,FlockID,FactoryAuthToken,AWS Profile Name,AWSAccountID,S3 Bucket Name,Token Type,Filename,File Path,In Scope,Note
 abcdef123,flock:99999888887777666555544332211,aaaaaabbbbbcccccdddddeeee,default,AWS-1,S3-1,aws-id,aws.credentials,/etc,True,"ignore this token, it is for testing"
 abcdef123,flock:99999888887777666555544332211,aaaaaabbbbbcccccdddddeeee,default,AWS-1,S3-2,aws-id,aws.credentials,,True,"ignore this token, it is for testing"
