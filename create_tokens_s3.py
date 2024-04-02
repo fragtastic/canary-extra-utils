@@ -6,6 +6,8 @@ import os
 import re
 import time
 import boto3
+import argparse
+
 
 allowedTokenTypes = ['aws-id', 'doc-msword', 'msexcel-macro', 'msword-macro', 'pdf-acrobat-reader', 'slack-api']
 
@@ -72,7 +74,7 @@ def process_token(row):
         'aws-account-id': row['AWSAccountID'],
         's3-bucket-name': row['S3 Bucket Name'],
         'path': row['File Path'],
-        'extra': row['Extra Note'],
+        'note': row['Note'],
         'filename': row['Filename'],
         'fullpath': row['File Path'] + row['Filename']
     }
@@ -112,14 +114,17 @@ def upload_to_s3(bucket_name, file_bytes, file_key, profile_name):
     except Exception as e:
         print(f'Error uploading file to S3: {e}')
 
-def main():
-    inputFilename = 'tokens.csv'
+def main(inputFilename: str):
     with open(inputFilename, 'r') as inputFile:
-        reader = csv.DictReader(inputFile)
+        reader = csv.DictReader(inputFile, delimiter=',')
         for row in reader:
             if row.get('In Scope', 'False').lower() in ['true', 'yes']:
                 process_token(row)
             # break
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser("create_tokens_s3")
+    parser.add_argument("--filename", help="A CSV file with all of the information.", type=str, required=False, default='tokens.csv')
+    args = parser.parse_args()
+
+    main(args.filename)
