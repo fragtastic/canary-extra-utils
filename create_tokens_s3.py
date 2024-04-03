@@ -115,8 +115,17 @@ def upload_to_s3(bucket_name, file_bytes, file_key, profile_name):
         print(f'Error uploading file to S3: {e}')
 
 def main(inputFilename: str):
+    match inputFilename[-3:]:
+        case 'csv':
+            delimiter = ','
+        case 'tsv':
+            delimiter = '\t'
+        case _:
+            print('Unsupported file type. Please use only one of CSV or TSV')
+            exit()
+
     with open(inputFilename, 'r') as inputFile:
-        reader = csv.DictReader(inputFile, delimiter=',')
+        reader = csv.DictReader(inputFile, delimiter=delimiter)
         for row in reader:
             if row.get('In Scope', 'False').lower() in ['true', 'yes']:
                 process_token(row)
@@ -124,7 +133,7 @@ def main(inputFilename: str):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("create_tokens_s3")
-    parser.add_argument("--filename", help="A CSV file with all of the information.", type=str, required=False, default='tokens.csv')
+    parser.add_argument("--filename", help="A separated value file with all of the information. This can be a CSV or TSV.", type=str, required=True)
     args = parser.parse_args()
 
     main(args.filename)
