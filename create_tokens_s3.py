@@ -66,7 +66,7 @@ def download_canary_token(
 
 
 def process_token(row):
-    # Make sure that the token path always ends in a '/'
+    # Make sure that the token path always ends in a '/', unless blank.
     if len(row['File Path']) > 0 and row['File Path'][-1] != '/':
         row['File Path'] += '/'
     
