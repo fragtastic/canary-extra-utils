@@ -7,6 +7,18 @@ import re
 import time
 import boto3
 import argparse
+import logging
+
+
+def setup_logging(logLevel):
+    formatStr = '%(asctime)s - %(levelname)s - %(message)s'
+    # Configure logging to write to both file and console
+    logging.basicConfig(filename='create_tokens_s3.log', filemode='a', level=logLevel, format=formatStr)
+    console = logging.StreamHandler()
+    # console.setLevel(logging.INFO)
+    formatter = logging.Formatter(formatStr)
+    console.setFormatter(formatter)
+    logging.getLogger('').addHandler(console)
 
 
 allowedTokenTypes = ['aws-id', 'doc-msword', 'msexcel-macro', 'msword-macro', 'pdf-acrobat-reader', 'slack-api']
@@ -27,10 +39,10 @@ def create_canary_token(
         'kind': tokenType,
         'flock_id': flockID,
     }
-    print(f'> Creating token: {data}')
+    logging.info(f'> Creating token: {data}')
 
     resp = requests.post(api_url, data=data)
-    print(f'> RESPONSE: {resp.json()}')
+    logging.debug(f'> RESPONSE: {resp.json()}')
 
     return resp.json()
 
@@ -41,7 +53,7 @@ def download_canary_token(
         tokenID: str,
         reminder: dict,
         ) -> bytes:
-    print(f'> Downloading token: {tokenID}')
+    logging.info(f'> Downloading token: {tokenID}')
 
     data = {
         'factory_auth': factoryAuthToken,
@@ -102,7 +114,7 @@ def process_token(row):
             profile_name=row['AWS Profile Name']
         )
     else:
-        print('> SOMETHING WENT WRONG')
+        logging.error('> SOMETHING WENT WRONG')
 
 def upload_to_s3(bucket_name, file_bytes, file_key, profile_name):
     try:
@@ -110,9 +122,9 @@ def upload_to_s3(bucket_name, file_bytes, file_key, profile_name):
         s3 = session.client('s3')
         s3.put_object(Bucket=bucket_name, Key=file_key, Body=file_bytes)
 
-        print(f'File "{file_key}" uploaded successfully using profile "{profile_name}" to bucket "{bucket_name}"')
+        logging.info(f'File "{file_key}" uploaded successfully using profile "{profile_name}" to bucket "{bucket_name}"')
     except Exception as e:
-        print(f'Error uploading file to S3: {e}')
+        logging.error(f'Error uploading file to S3: {e}')
 
 def main(inputFilename: str):
     match inputFilename[-3:]:
@@ -121,19 +133,24 @@ def main(inputFilename: str):
         case 'tsv':
             delimiter = '\t'
         case _:
-            print('Unsupported file type. Please use only one of CSV or TSV')
+            logging.critical('Unsupported file type. Please use only one of CSV or TSV')
             exit()
 
     with open(inputFilename, 'r') as inputFile:
         reader = csv.DictReader(inputFile, delimiter=delimiter)
         for row in reader:
             if row.get('In Scope', 'False').lower() in ['true', 'yes']:
-                process_token(row)
-            # break
+                try:
+                    process_token(row)
+                except Exception as e:
+                    logging.critical(f'Unhandled Error: {e}')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("create_tokens_s3")
     parser.add_argument("--filename", help="A separated value file with all of the information. This can be a CSV or TSV.", type=str, required=True)
+    parser.add_argument('-l', '--log-level', dest='logLevel', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Set the logging level')
     args = parser.parse_args()
+    setup_logging(getattr(logging, args.logLevel))
 
     main(args.filename)
