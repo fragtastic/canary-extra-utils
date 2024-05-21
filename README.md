@@ -8,7 +8,5 @@
 ## Enduser
 
 - Install the requirements: `pip install -r requirements.txt`
-- Get correct AWS profile name `grep -E -e "(\[.+\])" ~/.aws/credentials`
-- Run the upload script:
-  - `python create_tokens_s3.py --filename <csv or tsv file>`
-  - `python -u create_tokens_s3.py --filename <csv or tsv file> | tee output.log`
+- Get correct AWS profile name: `grep -E -e "(\[.+\])" ~/.aws/credentials`
+- Run the upload script: `python create_tokens_s3.py --filename <csv or tsv file> --log-level DEBUG`
